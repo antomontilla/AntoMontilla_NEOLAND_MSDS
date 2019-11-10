@@ -1,0 +1,228 @@
+---
+title: "2_pra_rstudio_dataframes"
+description: "Practicamos con los dataframes"
+author: "Antonio Montilla"
+date: "1/11/2019"
+output: 
+  html_document: 
+    fig_caption: yes
+    highlight: haddock
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+---
+
+
+1. Creamos un dataframe
+
+```{r}
+#Creando los vectores con los datos proporcionados
+emp_id <- 1:5 
+emp_name <- c("Rick","Dan","Michelle","Ryan","Gary")
+salary = c(623.3,515.2,611.0,729.0,843.25)
+start_date <- as.Date(c("2012-01-01", "2013-09-23", "2014-11-15", "2014-05-11","2015-03-27"))
+
+# creando el dataframe employees con los vectores de arriba =
+df_emp <- data.frame(emp_id, emp_name, salary, start_date) 
+df_emp #imprimiendo el df_emp para comprobar los datos
+```
+
+
+
+2. Observaremos su estructura
+
+```{r}
+str(df_emp)
+```
+
+
+3. Realizamos un resumen de los datos estadísticos
+
+```{r}
+summary(df_emp)
+```
+
+
+
+4. Extraemos los dos primeros resultados
+
+```{r}
+head(df_emp, n=2)
+```
+
+
+* * *
+
+
+5. Cargamos el dataset iris y la guardamos en una nueva variable
+
+```{r}
+df_iris <- iris #creando nueva df iris
+```
+
+
+6. Realizaremos los mismos puntos describiendo el total de filas y columnas, así como el total de observaciones.
+
+```{r}
+str(df_iris)
+summary(df_iris)
+```
+
+
+7. Extraeremos solo los valores de "virginica"
+
+```{r}
+#creadon subset donde col _Species_ sea igual a 'virginica'
+virginica <- subset(df_iris,df_iris$Species == "virginica")
+virginica #imprimiendo virginica para comprobar datos
+```
+
+
+8. Repetimos para "versicolor", solo el ancho y largo del pétalo
+
+```{r}
+#creadon subset donde col _Species_ sea igual a 'versicolor'
+versicolor <- subset(df_iris,df_iris$Species == "versicolor")
+versicolor[,3:5] #imprimiendo versicolor con columnas ancho y largo del pétalo
+```
+
+
+9. Extraemos solo las observaciones de las filas 10 hasta la 20, del pétalo y sépalo de la specie "setosa"
+
+```{r}
+#creadon subset donde col _Species_ sea igual a 'setosa'
+setosa <- subset(df_iris,df_iris$Species == "setosa")
+setosa[10:20,] #imprimiendo solo las observaciones 10:20 de setosa
+```
+
+10. Extraemos solo los observaciones de la especie "virginica" donde el pétalo sea más largo de 3 y el ancho mayor de 1.50
+
+```{r}
+#creado subset donde col _Species_ sea igual a 'virginica', el pétalo sea más largo de 3 y más ancho de 1.5
+virginica2 <- subset(df_iris,df_iris$Petal.Length > 3.0 & df_iris$Petal.Width > 1.5 & df_iris$Species == "virginica")
+virginica2 #imprimiendo virginica2 para comprobar datos
+```
+
+
+11. Extraemos solo los observaciones todas las especies donde el pétalo sea más largo de 6.0 y el ancho mayor de 2.0
+
+```{r}
+#creado subset donde el pétalo sea más largo de 6 y más ancho de 2
+subset3 <- subset(df_iris,df_iris$Petal.Length > 6.0 & df_iris$Petal.Width > 2.0)
+subset3 #imprimiendo subset3 para comprobar datos
+```
+
+
+
+12. 11. Extraemos solo los observaciones todas las especies donde el sépalo sea menor de largo de 4.0 y el ancho mayor de 3.0
+
+```{r}
+#creado subset donde el sépalo sea menos largo de 6 y más ancho de 2
+subset4 <- subset(df_iris,df_iris$Sepal.Length < 4.0 & df_iris$Sepal.Width > 3.0)
+subset4 #imprimiendo subset4 para comprobar datos
+#no existen observaciones con tales especificaciones
+```
+
+
+* * * 
+
+Cansado de las flores?
+
+13. Cargamos el dataset desde la carpeta que vimos en aula el fichero movies.xls , cada hoja del fichero en una variable
+
+```{r}
+# Para importar un fichero podemos utilizar de momento, el botón del cuadrante environment (import dataset) y fichero excel
+
+#Importando el fichero movies usando la función _read_excel_ (para ello, tuve que descargar package _readxl_ primero). Mi versión de R no permite establecer el nombre de la hoja del fichero a importar via el botón del cuadrante (solo importa la primera by default)
+movie_1900 <- read_excel('/Users/antoniomontilla/Documents/Neoland/03_GitHub/AntoMontilla_NEOLAND_MSDS/data/movies.xls', sheet = '1900s')
+
+movie_2000 <- read_excel('/Users/antoniomontilla/Documents/Neoland/03_GitHub/AntoMontilla_NEOLAND_MSDS/data/movies.xls', sheet = '2000s')
+
+movie_2010 <- read_excel('/Users/antoniomontilla/Documents/Neoland/03_GitHub/AntoMontilla_NEOLAND_MSDS/data/movies.xls', sheet = '2010s')
+
+```
+
+14. Podemos realizar un pequeño exploratorio de este dataset? Si tenemos varias hojas deberíamos realizar por cada una de ellas
+
+```{r}
+str(movie_1900)
+
+str(movie_2000)
+
+str(movie_2010)
+```
+
+
+15. Seleccionaremos del fichero 2010, solo las películas realizadas en Alemania con duración superior a 150
+
+```{r}
+#Creando filtro en movie_2010 del country 'Germany' y durantion > 150
+subset_DE_150 <- subset(movie_2010,movie_2010$Country == "Germany" & movie_2010$Duration > 150)
+subset_DE_150
+#resultado revela que solo 1 película cumple con las especificaciones ('Cloud Atlas')
+```
+
+
+16. Ahora realizaremos un filtro solo para las peliculas del 2000, realizadas en España
+
+```{r}
+#Creando filtro en movie_2000 del country 'Spain'
+subset_SP_2000 <- subset(movie_2000,movie_2000$Country == "Spain")
+subset_SP_2000 #imprimiendo resultado para ver listas en el subset
+dim(subset_SP_2000) #dimensiones (filas y columnas)
+#imprimiendo resultado = existen 17 movies de Spain en los 2000s
+```
+
+
+17. Cuántas películas existen en movie_1900 que superan las 3 horas?
+
+```{r}
+#Creando filtro en movie_1900 con durantion > 180
+subset_1900_3h <- subset(movie_1900,movie_1900$Duration > 180)
+subset_1900_3h #imprimiendo el resultado para ver listas de películas
+dim(subset_1900_3h) #dimensión para contar filas
+#resultado revela que existen 34 películas con las especificaciones señaladas
+```
+
+
+
+18. Cuántas películas existen en movie_2000 que su score ha sido menor que 5 ? Enúmeralo por país.
+
+```{r}
+#Creando filtro en movie_2000 con score < 5
+subset_2000_s5 <- subset(movie_2000,movie_2000$`IMDB Score` < 5)
+#Imprimiento lista por nombre, pais y score
+data.frame(subset_2000_s5$Title, subset_2000_s5$Country, subset_2000_s5$`IMDB Score`)
+
+#Como siguiente paso, voy a contar número de películas por pais que tengan este score usando función _aggregate_: 
+#Creando columna dummy = 1 para ser utilizada en siguiente paso
+subset_2000_s5['Contar'] <- 1
+#agregando por pais usando función aggregate y columna dunmmy creada (para sumar)
+aggregate(subset_2000_s5$Contar~subset_2000_s5$Country, subset_2000_s5, FUN = sum)
+```
+
+
+19. En los tres ficheros, cuantos paises distintos existen?
+
+```{r}
+unique(movie_1900[,"Country"]) #existen 28 diferentes paises en movie_1900
+unique(movie_2000[,"Country"]) #existen 42 diferentes paises en movie_2000
+unique(movie_2010[,"Country"]) #existen 52 diferentes paises en movie_2010
+```
+
+
+20. Y podemos realizar cuántas películas hay por páis en 1900, 2000, 2010 ?
+
+```{r}
+#Para esta operación utilizaré función _aggregate_: 1) creo nueva columna dummy = 1 en cada fichero, 2) utilizo aggregate por pais e instruyo a sumar la nueva columna
+movie_1900['Contar'] <- 1
+aggregate(movie_1900$Contar~movie_1900$Country, movie_1900, FUN = sum)
+movie_2000['Contar'] <- 1
+aggregate(movie_2000$Contar~movie_2000$Country, movie_2000, FUN = sum)
+movie_2010['Contar'] <- 1
+aggregate(movie_2010$Contar~movie_2010$Country, movie_2010, FUN = sum)
+```
+
+
+
+
