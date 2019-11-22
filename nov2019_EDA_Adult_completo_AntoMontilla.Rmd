@@ -1,0 +1,198 @@
+---
+title: "08_EDA_AdultCensus"
+author: "Antonio - Montilla - NEOLAND"
+date: "22/11/2019"
+output: html_document
+---
+
+Basado en la última práctica EDA Titanic en R Studio (el fichero original así como el fichero HTML se encuentra en Google Drive), deben realizar una EDA completo para este dataset:
+
+https://archive.ics.uci.edu/ml/datasets/adult
+
+**IMPORTANTE**:
+Los pasos a realizar son:
+- exploración
+- limpieza
+- discretización
+- creación nuevos atributos
+- visualización con los gráficos de ggplot2 de las variables que consideran importantes
+- conclusiones justificadas sobre vuestra observaciones
+- posibilidad de agregar nuevos escenarios posibles (nuevas fuentes de datos, tipo de ingestas,
+otros aspectos de análisis, etc.)
+- Intentar crear el output de salida en formato HTML (buscar info de knit y sus dependencias)
+
+
+###Cargamos las librerías
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+###Importando la database
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+# Cargamos el juego de datos
+datosAdult <- read.csv('http://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data',stringsAsFactors = FALSE, header = FALSE)
+
+# Nombres de los atributos
+names(datosAdult) <- c("age","workclass","fnlwgt","education","education-num","marital-status","occupation","relationship","race","sex","capital-gain","capital-loss","hour-per-week","native-country","income")
+```
+
+###1. Primer paso crear un backup de la database
+```{r}
+datosAdult_backup <- datosAdult
+```
+
+###2. Explorando características principales del dataframe
+```{r}
+dim(datosAdult)
+str(datosAdult)
+head(datosAdult[1:5], n = 10)
+head(datosAdult[6:10], n = 10)
+head(datosAdult[11:15], n= 10)
+```
+
+##### Primeras observaciones:
+* La database contiene 15 variables y 32.561 observaciones
+* Las variables contienen información socieconómicas de individuos en USA, donde el ingreso anual (referencia $50k) se especifica en función al genero, raza, estado civil, educación, entre otros.
+* Las siguientes variables son caracteres y (en principio) requerirán factorización: 'workclass', 'education', 'marital-status', 'married-civ-spouse', 'occupation', 'relationship', 'race', 'sex', 'native-country'
+
+####Posible preguntas exploratorias:
+* El nivel educativo es un determinante del nivel de ingreso?
+* La raza importa en el nivel de ingreso?
+* Y el pais de origen?
+* Las personas casadas tienden a tener menos ingresos?
+* Realmente hay dicriminación de género en cuanto al ingreso en USA?
+* Se observa una brecha de ingreso entre trabajadores del Estado vs. privados?
+* Y en terminos de autónomos y empleados?
+
+###3. Limpieza: Explorar precensia de NAs en los datos
+```{r}
+colSums(is.na(datosAdult))
+```
+#### La exploración confirma no existen NAs en la dataset
+
+###4. Limpieza: missing values
+```{r}
+colSums(datosAdult=="")
+```
+####Los datos tampoco contienen missing
+
+###5. Explorando frecuencias por variables
+
+```{r}
+prop.table(table(datosAdult$income))
+table(datosAdult$age)
+prop.table(table(datosAdult$workclass))
+prop.table(table(datosAdult$education))
+prop.table(table(datosAdult$`education-num`))
+prop.table(table(datosAdult$`native-country`))
+prop.table(table(datosAdult$`marital-status`))
+prop.table(table(datosAdult$occupation))
+```
+
+###6. Discretrizando las variables
+
+```{r}
+apply(datosAdult, MARGIN = 2, FUN = function(x) length(unique(x)))
+```
+Ahora procedo a factorizar las string variables con pocas clases (en función al análisis exploratorio). Estas son: 'workclass', 'marital-status', 'race' y 'sex'
+
+```{r}
+cols1 <- c("workclass", "marital-status", "race", "sex")
+for (i in cols1){
+  datosAdult[,i] = as.factor(datosAdult[,i])
+}
+str(datosAdult)
+```
+
+###7. Creación de nuevos atributos
+
+####Pais de procedencia
+Con respecto a 'native-country', creo una nueva variable que denominada 'US_native' tomando 1 si individuo es originario de USA y 0 si no. Factorizo la nueva variable.
+
+```{r}
+datosAdult$US_native <- ifelse(datosAdult$`native-country` ==' United-States', 1, 0)
+table(datosAdult$US_native)
+datosAdult$US_native = as.factor(datosAdult$US_native)
+```
+
+####Nivel de ingreso
+Igualmente, creo una nueva variable denominada 'Income_50' que sea 1 si ingreso es '>50' o 0 si '<50' usando columna 'income'. Factorizo la nueva variable.
+
+```{r}
+datosAdult$Income_50 <- ifelse(datosAdult$income == " >50K", 1, 0)
+table(datosAdult$Income_50)
+str(datosAdult$Income_50)
+datosAdult$Income_50 = as.factor(datosAdult$Income_50)
+```
+
+####Raza
+También creo una variable de raza 'White' que toma 1 si race es blanco y 0 si no. Factorizo la nueva variable.
+
+```{r}
+datosAdult$White <- ifelse(datosAdult$race == ' White', 1, 0)
+table(datosAdult$White)
+datosAdult$White = as.factor(datosAdult$White)
+```
+
+###8. Análisis Conjunto de Datos y Conclusiones
+
+####El nivel educativo esta asociado con el nivel de ingreso?
+
+```{r}
+fila = dim(datosAdult)[1]
+ggplot(data=datosAdult[1:fila,], aes(x=`education-num`, fill=`Income_50`))+geom_bar(position="fill")+ylab("Frecuencia")
+```
+
+Hay una clara correlación positiva entre el número de años en educación con el nivel de ingreso, i.e. la probabilidad de que un individuo gane > $50k anuales crece en función a los años de estudio
+
+####La raza importa en el nivel de ingreso?
+```{r}
+ggplot(data=datosAdult[1:fila,], aes(x=White, fill=`Income_50`))+geom_bar(position="fill")+ylab("Frecuencia")
+```
+
+Los individuos blancos en USA tienen una mayor probabilidad de ganar ingresos superiores a los no blancos, sin embargo la brecha no es sustancial. Requiere mayor investigación (e.g. distribución de ingreso, ingreso medio), sin embargo, a priori, los datos no sugieren una gran discriminación respecto a la raza.
+
+####Y el pais de origen?
+```{r}
+ggplot(data=datosAdult[1:fila,], aes(x=US_native, fill=`Income_50`))+geom_bar(position="fill")+ylab("Frecuencia")
+```
+
+Ser procediente de USA incide marginalmente en la probabilidad de percibir ingresos > $50k versus individuos procedentes de otros paises.
+
+
+####Quienes son los grupos de edad que tienden a percibir mayores ingresos?
+```{r}
+ggplot(data = datosAdult[!(is.na(datosAdult[1:fila,]$age)),], 
+       aes (x=age, fill=Income_50))+geom_histogram(binwidth = 5, position = 'fill')+
+  ylab("Frecuencia")
+```
+
+Los individuos concentrados en la mediana de la población economicamente activa son los que tienen una mayor incidencia en percibir ingresos >$50k anuales.
+
+Es decir: la probabilidad de que un individuo gane >$50k al año tiende a incrementarse desde que ingresa al mercado laboral (i.e. 17-18 años) hasta que alcanza 50-55 años. A partir de alli, los individuos tieden a percibir menos ingresos.
+
+####Las personas casadas tienden a tener menos ingresos?
+```{r}
+ggplot(data=datosAdult[1:fila,], aes(x=`marital-status`, fill=`Income_50`))+geom_bar(position="fill")+ylab("Frecuencia")
+table(datosAdult$`marital-status`)
+```
+
+En USA, si un individuo está civilmente casado(a), tiene una probabilidad sustancialmente superior de percibir ingresos >$50K anuales que aquellos individuos no casados (e.g. divorciados, separados, viudos) 
+
+####Realmente hay dicriminación de género en cuanto al ingreso en USA?
+```{r}
+ggplot(data=datosAdult[1:fila,], aes(x=sex, fill=`Income_50`))+geom_bar(position="fill")+ylab("Frecuencia")
+```
+
+Ser de género masculino en USA incrementa notablemente la probablidad de percibir ingresos >$50k anuales versus al género femenino.
+
+####Se observa una brecha de ingreso entre trabajadores del Estado vs. privados?
+####Y en terminos de autónomos y empleados?
+```{r}
+ggplot(data=datosAdult[1:fila,], aes(x=workclass, fill=`Income_50`))+geom_bar(position="fill")+ylab("Frecuencia")
+table(datosAdult$workclass)
+```
+
+Los empleados públicos (en el agregado) tienen una probabilidad de percibir ingresos >$50k anuales superior a los empleados privados.
+Sin embargo, en USA, los individuos autónomos (que, naturalmente, incluye a los dueños del capital, i.e. empresas, negocios) son los que tienen una mayor incidencia de percibir ingresos >$50k anuales.
