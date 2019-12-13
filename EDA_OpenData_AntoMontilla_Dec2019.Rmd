@@ -1,0 +1,632 @@
+---
+title: "EDA - OpenData"
+author: "Antonio Montilla - NEOLAND"
+date: "28/11/2019"
+output: html_document
+---
+
+******
+# Introducción
+******
+## Presentación
+Esta práctica cubre de forma transversal la asignatura.
+
+Las Prácticas 1 y 2 de la asignatura se plantean de una forma conjunta de modo que la Práctica 2 (Minería de Datos) será continuación de la 1.
+
+El objetivo global de las dos prácticas consiste en seleccionar uno o varios juegos de datos, realizar las tareas de **preparación y análisis exploratorio** con el objetivo de disponer de datos listos para **aplicar algoritmos** de clustering, asociación y clasificación.
+
+## Objetivos
+La correcta asimilación de todos los aspectos trabajados durante el semestre.  
+En esta práctica abordamos un caso real de minería de datos donde tenemos que poner en juego todos los conceptos trabajados.
+Hay que trabajar todo el ciclo de vida del proyecto. Desde el objetivo del proyecto hasta la implementación del conocimiento encontrado pasando por la preparación, limpieza de los datos, conocimiento de los datos, generación del modelo, interpretación y evaluación.
+
+## Descripción de la Prácticas a realizar
+
+## Recursos Básicos
+Material docente proporcionado.
+
+## Criterios de valoración
+
+**Ejercicios prácticos** 
+
+Para todas las Prácticas es **necesario documentar** en cada apartado del ejercicio práctico que se ha hecho y como se ha hecho.
+
+
+******
+# Enunciado
+******
+Todo estudio analítico debe nacer de una necesidad por parte del Negocio o de una voluntad de dotarle de un conocimiento contenido en los datos y que solo podremos obtener a través de una colección de buenas prácticas basadas en la Minería de Datos.  
+
+El mundo de la analítica de datos se sustenta en 3 ejes:  
+
+1. Uno de ellos es el profundo **conocimiento** que deberíamos tener **del Negocio** al que tratamos de dar respuestas mediante los estudios analíticos.  
+
+2. El otro gran eje es sin duda las **capacidades analíticas** que seamos capaces de desplegar y en este sentido, las dos prácticas de esta asignatura pretenden que el estudiante realice un recorrido sólido por este segundo eje.  
+
+3. El tercer eje son los **Datos**. Las necesidades del Negocio deben concretarse con preguntas analíticas que a su vez sean viables responder a partir de los datos de que disponemos. La tarea de analizar los datos es sin duda importante, pero la tarea de identificarlos y obtenerlos va a ser para un analista un reto permanente.  
+
+Como **primera parte** del estudio analítico que nos disponemos a realizar, se pide al estudiante que complete los siguientes pasos:   
+
+1. Seleccionar un juego de datos y justificar su elección. El juego de datos deberá tener capacidades para que se le puedan aplicar algoritmos supervisados, algoritmos no supervisados y reglas de asociación.   
+
+2. Realizar un análisis exploratorio del juego de datos seleccionado.   
+
+3. Realizar tareas de limpieza y acondicionado para poder ser usado en procesos de modelado.
+
+4. Realizar métodos de discretización
+
+
+
+******
+# Rúbrica
+******
+* Justificación de la elección del juego de datos donde se detalle el potencial analítico que se intuye. El estudiante deberá visitar los siguientes portales de datos abiertos para seleccionar su juego de datos:
+  + [Datos.gob.es](https://datos.gob.es/es/catalogo?q=&frequency=%7B"type"%3A+"months"%2C+"value"%3A+"1"%7D&sort=score+desc%2C+metadata_modified+desc)
+  + [UCI Machine Learning](https://archive.ics.uci.edu/ml/datasets.php)
+  + [Datasets Wikipedia](https://en.wikipedia.org/wiki/List_of_datasets_for_machine-learning_research)
+  + [Datos abierto Madrid](https://datos.madrid.es/portal/site/egob/)
+  + [Datos abiertos Barcelona](https://opendata-ajuntament.barcelona.cat/ca/)
+  + [London Datastore](https://data.london.gov.uk/)
+  + [NYC OpenData](https://opendata.cityofnewyork.us/)
+* Información extraída del análisis exploratorio. Distribuciones, correlaciones, anomalías,... 
+* Explicación clara de cualquier tarea de limpieza o acondicionado que se realiza. Justificando el motivo y mencionando las ventajas de la acción tomada.
+* Realizar visualizaciones de las variables y de las observaciones
+* Conclusiones de manera detallada
+* Output en formato RMD y HTML desde la función Knit
+
+
+
+
+******
+# Práctica: Accidentes de Tráfico de la ciudad de Madrid
+******
+
+* Datos: registro de accidentes de tráfico en Madrid a lo largo del año 2019 (Enero- Octubre)
+* Fuente: datos.madrid.es
+* Justificación: la base de dato detalla información referente a los accidentes de tráfico en la ciudad de Madrid, incluyendo punto geográfico del incidente (i.e. calle, distrito), hora y fecha (i.e. dia, mes, temporada), tipo de vehículo (i.e. moto, particular, bus, pesado), personas involucradas, condiciones meteorológicas y grado de lesividad.
+Los datos son de un volumen considerable, actualizados por mes en función a los incidentes registrados y que, al ser prosesados y analisados, pudieran tener un gran valor para diversos grupos de la sociedad (incluyendo cuerpos de vigilancia de tráfico, policia, bomberos, hospitales y centros de atención médica, proveedores de seguros de coche, servicio de alquiler de coche y otros medios de transporte, usuarios privados, y administraciones publicas en general).
+
+### Importando librerias
+```{r setup, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+
+###1. Cargando la base de datos directo de la fuente
+```{r}
+df_crash <- read.csv2('https://datos.madrid.es/egob/catalogo/300228-19-accidentes-trafico-detalle.csv', stringsAsFactors = FALSE, header = FALSE)
+#Elimando el header que continie el DDBB para reemplazar por titulos limpios
+df_crash <- df_crash[-1,]
+names(df_crash) <- c('Expediente', 'Fecha', 'Hora', 'Calle', 'Num', 'Distrito', 'Tipo', 'Tiempo', 'Vehiculo', 'Persona', 'Edad', 'Sexo', 'Lesividad')
+```
+
+
+###2. Creando un backup de la base de datos
+```{r}
+df_crash_backup <- df_crash
+```
+
+
+###3. Exploración incial de la base de datos
+```{r}
+dim(df_crash)
+str(df_crash)
+head(df_crash[1:5], n = 10)
+head(df_crash[6:10], n = 10)
+head(df_crash[11:13], n = 10)
+tail(df_crash[1:5], n = 10)
+```
+
+#### Primeras observaciones:
+* La base de dato contiene 42.443 obersaciones con 13 columnas
+* Las columnas contienen información de accidentes de tránsito en la ciudad Madrid a lo largo del 2019 (enero-Octubre), incluyendo hora, calle, distrito, condiciones meteorológicas, características de vehiculo y grado de lesividad.
+* Todas las columnas son caracteres; el análisis conjunto de datos requerirá factorizar variables relevantes.
+* Para mayor información de las columnas, ver https://datos.madrid.es/FWProjects/egob/Catalogo/Seguridad/Ficheros/Estructura_DS_Accidentes_trafico_desde_2019.pdf
+
+#### Posibles preguntas exploratorias:
+* Cuáles son los distritos de la ciudad donde se producen más accidentes?
+* Y en términos de grado de lesividad?
+* Se puede observar alguna calle en especial donde ocurren más accidentes?
+* Cuáles son los dias del año en el que hay más accidentes, incluyendo en términos de lesividad?
+* Y en términos de dia de la semana? los fines de semana son más fatales?
+* A qué hora tienden a ocurrir los accidentes de tránsito? Mañana, tarde, noche o madrugada? Cuál hora es la más fatal?
+* En cuál estación del año ha habido más accidentes de transitos?
+* Cómo influye el tiempo en los accidentes de tránsito? Y en el número de fallecidos?
+* Cuál tipo de vehículo es más propenso a accidentes? relación con grado de lesividad
+* Cuáles grupos de edades han sufrido más accidentes? en cuáles grupos hay mayor incidencia de fallecimiento?
+* Y en términos de sexo?
+* Qué tipo de persona (e.g. conductor, testigo) es el más expuestos? En términos de testigo: cuántos han resultado en fallecimiento?
+
+
+###4. Limpieza: Explorar precensia de NAs en los datos
+```{r}
+colSums(is.na(df_crash))
+```
+
+#### La exploración sugiere no existen NAs en la dataset
+
+###5. Limpieza: missing values
+
+```{r}
+#Intentando distintos caracteres que pudieran contener obervaciones nulas
+colSums(df_crash=="")
+colSums(df_crash==" ")
+colSums(df_crash=="?")
+colSums(df_crash=="-")
+```
+
+
+#####Las siguientes columnas contienen valores nulos:
+* Num: 23.159 valores "-", es decir sobre 55% de las observaciones.
+* Lesividad: 17.615 valores vacios, alrededor de 41% de las observaciones. De acuerdo a la descripción de la base de datos, valores vacios corresponden a "sin asistencia sanitaria" que corresponde a la categoría 14. Solución: reemplazar por 14. Se debe explorar esta columna más detalladamente.
+* Tiempo: 4.245 observaciones vacias, 10% de los datos.
+* Sexo: 4.159 observaciones vacias, 10% de los datos.
+* Vehículo: 156, 0.4% de los datos
+* Distrito, persona, tipo: 0-30 valores nulos, insignificante en términos del tamaño de la base de dato.
+
+###6. Tratamiento de los datos
+
+#### Num
+* Columna que registra la ubicación exacta del accidente, i.e. número de la calle donde ocurrió.
+* Con 55% de las observaciones con datos nulos ("-") y en función a las posibles preguntas a explorar, se decide eliminar la columna de la base de dato.
+* De igual manera, la columna _Expediente_ (que registra el numero de expediente policial) se elimina
+
+```{r}
+#Eliminando las columnas _Num_ y _Expendiente_ y comprobando con head()
+df_crash <- subset(df_crash, select = -Num)
+df_crash <- subset(df_crash, select = -Expediente)
+head(df_crash, n=5)
+```
+
+#### Vehiculo
+* 156 datos missing.
+* 70% de datos categoria 'turismo'. Usar moda para datos vacios
+
+```{r}
+df_crash$Vehiculo[df_crash$Vehiculo==""] = 'Turismo'
+table(df_crash$Vehiculo)
+prop.table(table(df_crash$Vehiculo))
+```
+
+
+#### Otras: Distrito, persona, tipo
+* 0-30 valores nulos. 
+* Eliminar observaciones vacias: 1) volver NAs, 2) eliminar NAs
+
+```{r}
+df_crash$Distrito[df_crash$Distrito==""] = NA
+df_crash$Persona[df_crash$Persona==""] = NA
+df_crash$Tipo[df_crash$Tipo==""] = NA
+df_crash <- df_crash[complete.cases(df_crash$Distrito), ]
+df_crash <- df_crash[complete.cases(df_crash$Persona), ]
+df_crash <- df_crash[complete.cases(df_crash$Tipo), ]
+colSums(is.na(df_crash))
+```
+
+#### Lesividad
+La columna toma los valores:
+
+* 01-02 y 05-07: leve, con distintos grados de asistencia médica
+* 03: grave
+* 04: fatal (fallecido)
+* 14: sin asistencia
+* '': sin asistancia 
+* 77: se deconoce
+
+Observando la distribución de la columna
+```{r}
+table(df_crash$Lesividad)
+```
+
+Acciones a tomar:
+
+* Remplazar los missing por 14 ('sin asistencia')
+* Eliminar la única observación con valor 77
+
+```{r}
+df_crash$Lesividad[df_crash$Lesividad==""] = "14"
+df_crash <- df_crash[df_crash$Lesividad!="77", ]
+table(df_crash$Lesividad)
+```
+
+#### Tiempo
+
+```{r}
+table(df_crash$Tiempo)
+prop.table(table(df_crash$Tiempo))
+```
+
+* 10% de los datos están vacios, 
+* 1.3% de los datos "se desconoce"
+
+Acciones a tomar:
+
+* Por ahora reemplazar los vacios por "Se desconoce"
+* Al factorizar las columnas, mostrar tabla de correlaciones con otras variables para determinar si se puede estimar con información en otras columnas (en pasos posteriores).
+
+```{r}
+df_crash$Tiempo[df_crash$Tiempo==""] = "Se desconoce"
+table(df_crash$Tiempo)
+```
+
+#### Sexo
+* 4.159 observaciones vacias, 10% de los datos.
+* Reemplazar con NAs para poder excluir al momento del análisis conjunto.
+
+```{r}
+df_crash$Sexo[df_crash$Sexo==""] = NA
+table(df_crash$Sexo)
+prop.table(table(df_crash$Sexo))
+colSums(is.na(df_crash))
+```
+
+#### Edad
+* 3.893 de observaciones son "Desconocida"
+* Reemplazar por moda ('DE 40 A 44 A\xd1OS')
+* Esta columna será agrupada en paso más adelante (por lo que las observaciones "Desconocida" pertencerán al grupo "Adulto" que comprende alrededor del 45% de los datos)
+
+
+```{r}
+df_crash$Edad[df_crash$Edad=="DESCONOCIDA"] = "DE 40 A 44 A\xd1OS"
+table(df_crash$Edad)
+```
+
+
+###7. Creación de nuevos atributos y agrupaciones
+
+#### Lesividad: agrupación
+Crear nueva variable _LesividadF_ que agrupe las observaciones con asistencia leve (valores 01-02, 05-07 y sin asistencia) como 'leve', 'grave' (03), y fallecidos (04) como 'Fatal'.
+
+```{r}
+df_crash$LesividadF <- ifelse(df_crash$Lesividad =='03', "grave", "leve")
+df_crash$LesividadF[df_crash$Lesividad=="04"] = "fatal"
+table(df_crash$LesividadF)
+table(df_crash$Lesividad)
+```
+
+#### Calendario: dia de la semana
+* A partir de la columna _fecha_ crear nueva columna _dia_ que contenga dia de la semana
+* A partir de _dia_ crear una nueva columna _finde_ que tome 1 si dia es sábado o domingo
+
+
+```{r}
+library(lubridate)
+df_crash$Date1 <- parse_date_time(df_crash$Fecha, orders = c("ymd", "dmy", "mdy"))
+df_crash$Dia <- weekdays(df_crash$Date1)
+table(df_crash$Dia)
+df_crash$Finde <- ifelse(df_crash$Dia =='Saturday', 1, 0)
+df_crash$Finde[df_crash$Dia=="Sunday"] = 1
+table(df_crash$Finde)
+```
+
+* Crear una columna con el mes del año en que ocurrió el accidente
+
+```{r}
+df_crash$Mes <- month(df_crash$Date1)
+table(df_crash$Mes)
+```
+
+* Temporada: crear una columna con la temporada (invierno, primavera, verano) a partir de _mes_
+
+```{r}
+df_crash$Season <- ifelse(df_crash$Mes<=3, "Invierno", "Primavera")
+df_crash$Season[df_crash$Mes>6] = "Verano"
+df_crash$Season[df_crash$Mes>9] = "Octubre"
+table(df_crash$Season)
+```
+
+####Vehículo: Agrupacion
+
+Agrupar en nueva columna con categoria: 
+
+* 'Turismo' (Turismo, Cuadriciclo, Cuadriciclo no ligero).
+* 'Furgoneta' (Furgoneta, Todo terreno).
+* 'Moto' (Ciclomotor, Motocicleta > 125cc, Motocicleta hasta 125cc).
+* 'Bici' (Bicicleta, Ciclo).
+* Bus (Autob\xfas, Autob\xfas articulado, Caravana, Autocaravana, Microb\xfas <=17 plazas).
+* 'Pesado' (Cami\xf3n r\xedgido,  Maquinaria de obras, Remolque, Semiremolque, Tractocami\xf3n, Veh\xedculo articulado, Tranv\xeda).
+* Otros (Otros veh\xedculos con motor, Otros veh\xedculos sin motor, Sin especificar)
+
+```{r}
+df_crash$VehiculoT <- ifelse(df_crash$Vehiculo=="Turismo", "Turismo", "Pesado")
+df_crash$VehiculoT[df_crash$Vehiculo=="Furgoneta"] = "Furgoneta"
+df_crash$VehiculoT[df_crash$Vehiculo=="Todo terreno"] = "Furgoneta"
+df_crash$VehiculoT[df_crash$Vehiculo=="Ciclomotor"] = "Moto"
+df_crash$VehiculoT[df_crash$Vehiculo=="Motocicleta > 125cc"] = "Moto"
+df_crash$VehiculoT[df_crash$Vehiculo=="Motocicleta hasta 125cc"] = "Moto"
+df_crash$VehiculoT[df_crash$Vehiculo=="Bicicleta"] = "Bici"
+df_crash$VehiculoT[df_crash$Vehiculo=="Ciclo"] = "Bici"
+df_crash$VehiculoT[df_crash$Vehiculo=="Autob\xfas"] = "Bus"
+df_crash$VehiculoT[df_crash$Vehiculo=="Autob\xfas articulado"] = "Bus"
+df_crash$VehiculoT[df_crash$Vehiculo=="Caravana"] = "Bus"
+df_crash$VehiculoT[df_crash$Vehiculo=="Autocaravana"] = "Bus"
+df_crash$VehiculoT[df_crash$Vehiculo=="Microb\xfas <=17 plazas"] = "Bus"
+df_crash$VehiculoT[df_crash$Vehiculo=="Otros veh\xedculos con motor"] = "Otros"
+df_crash$VehiculoT[df_crash$Vehiculo=="Sin especificar"] = "Otros"
+df_crash$VehiculoT[df_crash$Vehiculo=="Otros veh\xedculos sin motor"] = "Otros"
+table(df_crash$VehiculoT)
+```
+
+####Edad: Agrupacion
+Crear grupos de edades: nino (0-14), joven (15-24), joven adulto (25-35), adulto (35-65), mayor (>65)
+
+```{r}
+table(df_crash$Edad)
+df_crash$EdadF <- ifelse(df_crash$Edad=="DE 0 A 5 A\xd1OS", "nino", "adulto")
+df_crash$EdadF[df_crash$Edad=="DE 10 A 14 A\xd1OS"] = "nino"
+df_crash$EdadF[df_crash$Edad=="DE 6 A 9 A\xd1OS"] = "nino"
+df_crash$EdadF[df_crash$Edad=="DE 15 A 17 A\xd1OS"] = "joven"
+df_crash$EdadF[df_crash$Edad=="DE 18 A 20 A\xd1OS"] = "joven"
+df_crash$EdadF[df_crash$Edad=="DE 21 A 24 A\xd1OS"] = "joven"
+df_crash$EdadF[df_crash$Edad=="DE 25 A 29 A\xd1OS"] = "joven adulto"
+df_crash$EdadF[df_crash$Edad=="DE 30 A 34 A\xd1OS"] = "joven adulto"
+df_crash$EdadF[df_crash$Edad=="DE 65 A 69 A\xd1OS"] = "mayor"
+df_crash$EdadF[df_crash$Edad=="DE 70 A 74 A\xd1OS"] = "mayor"
+df_crash$EdadF[df_crash$Edad=="MAYOR DE 74 A\xd1OS"] = "mayor"
+table(df_crash$EdadF)
+```
+
+```{r}
+table(df_crash$Distrito)
+```
+
+
+###8. Discretrizando las variables
+
+```{r}
+apply(df_crash, MARGIN = 2, FUN = function(x) length(unique(x)))
+```
+
+Las variables a discrtizar: Distrito, Tiempo, Persona, Sexo, LesividadF, Dia, Finde, Mes, Season, VehiculoT, EdadF
+
+
+```{r}
+cols1 <- c("Distrito", "Tiempo", "Persona", "Sexo", "LesividadF", "Dia", "Finde", "Mes", "Season", "VehiculoT", "EdadF")
+for (i in cols1){
+  df_crash[,i] = as.factor(df_crash[,i])
+}
+str(df_crash)
+```
+
+Finalmente, por cuestiones de limpieza, se crea una nueva dataframe con las columnas que se utilizarán en el análisis conjunto de los datos
+
+```{r}
+df_crashF <- data.frame(df_crash$Hora, df_crash$Calle, df_crash$Distrito, df_crash$Tiempo, df_crash$Persona, df_crash$Sexo, df_crash$LesividadF, df_crash$Date1, df_crash$Dia, df_crash$Finde, df_crash$Mes, df_crash$Season, df_crash$VehiculoT, df_crash$EdadF)
+str(df_crashF)
+```
+
+###9. Análisis Conjunto de los Datos
+
+#### Punto Geográfico
+
+##### Cuáles son los distritos de la ciudad donde se producen más accidentes?
+
+```{r}
+filas = dim(df_crashF)[1]
+q <- ggplot(data=df_crashF[1:filas,], aes(x=df_crash.Distrito, fill=df_crash.LesividadF))+geom_bar()
+q + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+* Puente de Vallecas, Salamanca, Chamartin, Carabanchel, y la ciudad Lineal son los distritos de Madrid donde más se han registrado accidentes de tráfico en el 2019.
+
+
+##### Y en términos de grado de lesividad?
+
+```{r}
+# Tabla de frecuencia absoluta
+prop.table(table(df_crashF$df_crash.LesividadF))
+table(df_crashF$df_crash.LesividadF)
+t1<-table(df_crashF[1:filas,]$df_crash.Distrito, df_crashF[1:filas,]$df_crash.LesividadF)
+
+t<-table(df_crashF[1:filas,]$df_crash.Distrito, df_crashF[1:filas,]$df_crash.LesividadF)
+for (i in 1:dim(t)[1]){
+    t[i,]<-t[i,]/sum(t[i,])*100
+}
+t1
+t
+```
+
+* La gran mayoría de registro (99% de todas las observaciones) son accidentes leves, frecuencia que tiende a repetirse consistentemente por distrito.
+* Solo hubo 417 (0.1%) y 26 (0.06%) accidentes "graves" y "fatales", respectivamente.
+* La mayor cantidad de accidentes fatales sucedieron en Moncloa-Aravaca (5 de un total de 24) y Retiro (3).
+* La mayor cantidad de accidentes graves sucedieron en Salamanca (51 de 417) y Chamartin (46)
+
+
+##### Se puede observar alguna calle en especial donde ocurren más accidentes?
+
+```{r}
+#Creando una df con columna calle
+calle <- df_crashF$df_crash.Calle
+#Agregando columna calle for unique values y guardando
+calle2 <- aggregate(data.frame(count = calle), list(value = calle), length)
+#Ordenando de manera descendente
+head(calle2[order(-calle2$count),], n = 10)
+```
+
+* El Paseo la Castellana es la calle donde se han registrado más accidentes de tránsito en Madrid en 2019, con 584 incidentes (de 42.443 registros). Esto equivale a un ratio de 1.9 accidentes por dia en el periodo considerado (Ene-Oct 2019). 
+* El Paseo la Castellana atraviesa los distritos de Chamartin y Salamanca, dos de los tres distritos con mayor número de accidentes en el 2019.
+* La Calle Alcala es la segunda con mas accidentes, con 535 registros.
+* Otras calles con un elevado número de accidentes (140-230) incluyen la Av. Albufera, Calle Bravo Murillo, el Paseo de Extremadura y la Calle Francisco Silvela
+
+#### Calendario
+
+* Cuáles son los dias del año en el que hay más accidentes, incluyendo en términos de lesividad?
+
+```{r}
+ggplot(df_crashF, aes(x=df_crash.Date1)) + geom_histogram()
+```
+
+* La viusalización de los datos muestra ciertos picos (e.g. mid-Feb, Marzo, principios de Abril, Junio, Julio y Septiembre) y bajos (enero, Agosto) en los accidentes de tránsito.
+* Esto sugiere claramente en un componente estacional (e.g. Agosto) en cuanto a la flota de vehiculos transitando la ciudad en un dia especifico.
+* Un analisis más detallado, sin embargo, pudiera arrojar mayor información sobre periodos/dias especificos más propensos a que hayan accidentes.
+
+
+```{r}
+#Creando una df con columna Date1
+fecha <- df_crashF$df_crash.Date1
+#Agregando columna fecha for unique values y guardando
+fecha2 <- aggregate(data.frame(count = fecha), list(value = fecha), length)
+#Ordenando de manera descendente
+head(fecha2[order(-fecha2$count),], n = 10)
+```
+
+* La tabla muestra que el 5 de Abril (con 272 registros) fue el dia con un mayor registro de accidentes en el 2019 en Madrid, seguido por el 31 de Mayo (238), 24 de Abril (234), 1 de Febrero (229), 22 de Febrero (211), 19 de Enero (210), 4 de Octubre (209) y 31 de Octubre (200). 
+* De estos 8 dias, 5 dias fueron viernes.
+* Se deben cruzar los datos con calendarios, festivos, eventos (e.g. deportivos), entre otros.
+
+
+##### Y en términos de dias de la semana? los fines de semana son más fatales?
+
+
+```{r}
+q2 <- ggplot(data=df_crashF[1:filas,], aes(x=df_crash.Dia, fill=df_crash.LesividadF))+geom_bar()
+q2 + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+#Tablas de Frecuenca
+f1<-table(df_crashF[1:filas,]$df_crash.Dia, df_crashF[1:filas,]$df_crash.LesividadF)
+
+f<-table(df_crashF[1:filas,]$df_crash.Dia, df_crashF[1:filas,]$df_crash.LesividadF)
+for (i in 1:dim(f)[1]){
+    f[i,]<-f[i,]/sum(f[i,])*100
+}
+f
+f1
+```
+
+* Consistente con los datos anteriores (por fecha), la visualización confirma que los viernes son los dias de la semana donde han ocurrido más accidentes en el 2019, en torno al 16% de todas las obersvaciones.
+* Sin embargo, en términos de grado de lesividad, los sábados son los dias donde han ocurrido más accidentes con fallecidos (6 de 26), seguido por los Jueves (5) y los miércoles (5).
+
+
+##### En cuál estación del año ha habido más accidentes de transito?
+
+```{r}
+q3 <- ggplot(data=df_crashF[1:filas,], aes(x=df_crash.Season, fill=df_crash.LesividadF))+geom_bar()
+q3 + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+#Tabla de Frecuenca
+f2<-table(df_crashF[1:filas,]$df_crash.Season, df_crashF[1:filas,]$df_crash.LesividadF)
+f2
+
+```
+
+* En la primavera es donde ocurrieron más accidentes en Madrid, seguido por el invierno.
+* La relativa baja frecuencia de verano es probable que este relacionada a factores estacionales.
+
+#### Condiciones Meteorológicas
+
+Cómo influye el tiempo en los accidentes de tránsito? Y en el número de fallecidos?
+
+```{r}
+q4 <- ggplot(data=df_crashF[1:filas,], aes(x=df_crash.Tiempo, fill=df_crash.LesividadF))+geom_bar()
+q4 + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+q5 <- ggplot(data=df_crashF[1:filas,], aes(x=df_crash.Tiempo, fill=df_crash.LesividadF))+geom_bar(position="fill")+ylab("Frecuencia")
+q5 + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+#Tablas de Frecuenca
+f3<-table(df_crashF[1:filas,]$df_crash.Tiempo, df_crashF[1:filas,]$df_crash.LesividadF)
+
+f4<-table(df_crashF[1:filas,]$df_crash.Tiempo, df_crashF[1:filas,]$df_crash.LesividadF)
+for (i in 1:dim(f4)[1]){
+    f4[i,]<-f4[i,]/sum(f4[i,])*100
+}
+f3
+f4
+```
+
+* Los accidentes han ocurrido mayoritariamente en condiciones de tiempo despejado: a priori, no se observa una gran incidencia de condiciones de tiempo adversas (e.g. lluvia intensa, granizo) en el número de accidentes.
+* Sin embargo, el análisis se debe ampliar para incluir condiciones metereológicas mas detalladas.
+
+#### Tipo de Vehículo
+
+Cuál tipo de vehículo es más propenso a accidentes? relación con grado de lesividad
+
+```{r}
+q6 <- ggplot(data=df_crashF[1:filas,], aes(x=df_crash.VehiculoT, fill=df_crash.LesividadF))+geom_bar()
+q6 + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+q7 <- ggplot(data=df_crashF[1:filas,], aes(x=df_crash.VehiculoT, fill=df_crash.LesividadF))+geom_bar(position="fill")+ylab("Frecuencia")
+q7 + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+#Tablas de Frecuenca
+f5<-table(df_crashF[1:filas,]$df_crash.VehiculoT, df_crashF[1:filas,]$df_crash.LesividadF)
+
+f6<-table(df_crashF[1:filas,]$df_crash.VehiculoT, df_crashF[1:filas,]$df_crash.LesividadF)
+for (i in 1:dim(f6)[1]){
+    f6[i,]<-f6[i,]/sum(f6[i,])*100
+}
+f5
+```
+
+* Los coches particulares son los que han predominado en los accidentes de tránsito en Madrid en el 2019.
+* Sin embargo, los accidentes con fallecidos han sido principalmente con motocicletas (12 de 26), asi como los accidentes con lesividad 'grave' (220 de 417).
+* Solo ha ocurrido 1 accidente con fallecido en bicicleta; la gran mayoria de los accidentes con bicis son leves.
+* Asi mismo, solo 2 accidentes implicando buses (de un total de 1.282) resultaron en fallecidos.
+
+
+#### Tipo de Persona y Grupos de Edad
+
+##### Cuáles grupos de edades han sufrido más accidentes? en cuáles grupos hay mayor incidencia de fallecimiento?
+
+
+```{r}
+q8 <- ggplot(data=df_crashF[1:filas,], aes(x=df_crash.EdadF, fill=df_crash.LesividadF))+geom_bar()
+q8 + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+#Tablas de Frecuenca
+f7<-table(df_crashF[1:filas,]$df_crash.EdadF, df_crashF[1:filas,]$df_crash.LesividadF)
+
+f7
+```
+
+* El grupo de adultos (35-65) es el que ha sufrido mas accidentes de tránsito en el 2019, independientemente del grado de lesividad.
+* Se debe comparar con datos mas detallados de individuos empadronados en Madrid con coche (incluyendo edad, sexo) para medir en términos relativos.
+
+##### Y en términos de sexo?
+
+```{r}
+q9 <- ggplot(data=df_crashF[1:filas,], aes(x=df_crash.Sexo, fill=df_crash.LesividadF))+geom_bar()
+q9 + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+#Tablas de Frecuenca
+f8<-table(df_crashF[1:filas,]$df_crash.Sexo, df_crashF[1:filas,]$df_crash.LesividadF)
+
+f8
+```
+
+* Los hombres han sufrido el doble de accidentes de tránsito que las mujeres en Madrid en el 2019.
+* Estas frecuencias relativas se mantienen al considerar el grado de lesividad del accidente.
+* Esto puede estar influido por la cantidad de hombres conductores en Madrid (i.e. cual es el porcentaje de la flota de vehiculos conducida por hombres vs. mujeres?)
+
+##### Qué tipo de persona (e.g. conductor, testigo) es el más expuestos? En términos de testigo: cuántos han resultado en fallecimiento?
+
+```{r}
+q10 <- ggplot(data=df_crashF[1:filas,], aes(x=df_crash.Persona, fill=df_crash.LesividadF))+geom_bar()
+q10 + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+q11 <- ggplot(data=df_crashF[1:filas,], aes(x=df_crash.Persona, fill=df_crash.LesividadF))+geom_bar(position="fill")+ylab("Frecuencia")
+q11 + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+#Tablas de Frecuenca
+f9<-table(df_crashF[1:filas,]$df_crash.Persona, df_crashF[1:filas,]$df_crash.LesividadF)
+
+f9
+
+
+```
+*Los accidentes de tránsito tendieron a incluir mayoritariamente al conductor del vehículo: menos del 20% de las observaciones implicaron pasajeros o peatones.
+* Sin embargo, la proporsión de accidentes fatales y graves respecto al total implicando a peatones tendieron a ser relativamente mayores versus otros tipos de persona
+
+
+###10. Conclusiones y Sugerencias
+
+La exploración confirma que la base de datos puede ser de gran valor para diferentes entidades, incluyendo peatones, conductores, cuerpos policiales, de atención médica, prestadores de servicios de vehiculos de alquiler, empresas de seguro.
+
+Para su mejor explotación se sugiere la ampliación con base de datos que incluyan:
+
+* Condiciones metereológicas más detalladas.
+* Flota de cuerpos policiales (incluyendo tránsito) por distrito, fecha y hora.
+* Centros de atención médica por distrito, incluyendo atención de emergencia.
+* Características de individuos empadronados en Madrid con coche, para entender mejor proporciones en terminos de sexo y grupos de edad.
+* Asi mismo, características de los vehículos registrados.
+* La base de dato se debe cruzar con dummies de calendario: dias festivos, eventos especiales, entre otros.
+
